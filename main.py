@@ -18,8 +18,8 @@ if not firebase_admin._apps:
     st.write("Private key starts with:",
              data["private_key"][:30])
 
-cred = credentials.Certificate("serviceAccountKey.json")
-firebase_admin.initialize_app(cred)
+    cred = credentials.Certificate("serviceAccountKey.json")
+    firebase_admin.initialize_app(cred)
 
 db = firestore.client()
 
