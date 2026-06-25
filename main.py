@@ -91,7 +91,7 @@ col10, col11, col12 = st.columns([10, 1, 1])
 col13, col14, col15 = st.columns([10, 1, 1])
 
 with col1:
-    st.title("Student Assignment Tracker [v1.0]")
+    st.title("Student Assignment Tracker [v11111.0]")
 
 with col4:
     for _ in range(10):
