@@ -2,11 +2,24 @@ import streamlit as st
 import firebase_admin
 from firebase_admin import credentials, firestore
 from streamlit_autorefresh import st_autorefresh
+import os
+import json
 
 st_autorefresh(interval=1000, key="refresh")
 if not firebase_admin._apps:
-    cred = credentials.Certificate("serviceAccountKey.json")
-    firebase_admin.initialize_app(cred)
+
+    st.write("File exists:", os.path.exists("serviceAccountKey.json"))
+    
+    with open("serviceAccountKey.json") as f:
+        data = json.load(f)
+    
+    st.write("Project:", data["project_id"])
+    st.write("Email:", data["client_email"])
+    st.write("Private key starts with:",
+             data["private_key"][:30])
+
+cred = credentials.Certificate("serviceAccountKey.json")
+firebase_admin.initialize_app(cred)
 
 db = firestore.client()
 
