@@ -4,15 +4,25 @@ from firebase_admin import credentials, firestore
 from streamlit_autorefresh import st_autorefresh
 import os
 import json
+from google.auth.crypt import rsa
 
 st.write(os.path.exists("serviceAccountKey.json"))
 
 with open("serviceAccountKey.json") as f:
     data = json.load(f)
 
+st.write(data["private_key"][-30:])
 st.write(data["project_id"])
 st.write(data["client_email"])
 st.write(data["private_key"][:30])
+st.write(len(data["private_key"]))
+st.write(repr(data["private_key"][:60]))
+
+try:
+    rsa.RSASigner.from_service_account_info(data)
+    st.success("Key parses correctly")
+except Exception as e:
+    st.error(e)
 
 st_autorefresh(interval=1000, key="refresh")
 if not firebase_admin._apps:
