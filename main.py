@@ -10,6 +10,19 @@ if not firebase_admin._apps:
     cred = credentials.Certificate("serviceAccountKey.json")
     firebase_admin.initialize_app(cred)
 
+from google.oauth2 import service_account
+from google.auth.transport.requests import Request
+
+creds = service_account.Credentials.from_service_account_file(
+    "serviceAccountKey.json"
+)
+
+try:
+    creds.refresh(Request())
+    st.success("TOKEN OK")
+except Exception as e:
+    st.error(e)
+
 db = firestore.client()
 
 homework_db = db.collection("main").document("homework")
