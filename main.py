@@ -2,41 +2,9 @@ import streamlit as st
 import firebase_admin
 from firebase_admin import credentials, firestore
 from streamlit_autorefresh import st_autorefresh
-import os
-import json
-from google.auth.crypt import rsa
-
-st.write(os.path.exists("serviceAccountKey.json"))
-
-with open("serviceAccountKey.json") as f:
-    data = json.load(f)
-
-st.write(data["private_key"][-30:])
-st.write(data["project_id"])
-st.write(data["client_email"])
-st.write(data["private_key"][:30])
-st.write(len(data["private_key"]))
-st.write(repr(data["private_key"][:60]))
-
-try:
-    rsa.RSASigner.from_service_account_info(data)
-    st.success("Key parses correctly")
-except Exception as e:
-    st.error(e)
 
 st_autorefresh(interval=1000, key="refresh")
 if not firebase_admin._apps:
-
-    st.write("File exists:", os.path.exists("serviceAccountKey.json"))
-    
-    with open("serviceAccountKey.json") as f:
-        data = json.load(f)
-    
-    st.write("Project:", data["project_id"])
-    st.write("Email:", data["client_email"])
-    st.write("Private key starts with:",
-             data["private_key"][:30])
-
     cred = credentials.Certificate("serviceAccountKey.json")
     firebase_admin.initialize_app(cred)
 
@@ -58,19 +26,11 @@ div.stButton > button {
     border-radius: 12px !important;
     background-color: #191970 !important;
     color: white !important;
-    margin-left:10px;
-    margin-right:10px;
-    margin-top: 10px;
-    margin-top: 10px;
 }
 
 div.stButton > button * {
     font-family: "Courier New", monospace !important;
     font-weight: bold !important;
-    margin-left:10px;
-    margin-right:10px;
-    margin-top: 10px;
-    margin-top: 10px;
 }
 
 h1, h2 {
@@ -110,7 +70,7 @@ col10, col11, col12 = st.columns([10, 1, 1])
 col13, col14, col15 = st.columns([10, 1, 1])
 
 with col1:
-    st.title("Student Assignment Tracker [v11111.0]")
+    st.title("Student Assignment Tracker [v1.0]")
 
 with col4:
     for _ in range(10):
