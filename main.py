@@ -2,7 +2,9 @@ import streamlit as st
 import firebase_admin
 from firebase_admin import credentials, firestore
 from streamlit_autorefresh import st_autorefresh
+import time
 
+st.write("Time:", time.time())
 st_autorefresh(interval=1000, key="refresh")
 if not firebase_admin._apps:
     cred = credentials.Certificate("serviceAccountKey.json")
