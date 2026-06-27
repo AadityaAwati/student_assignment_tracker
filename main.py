@@ -1,32 +1,40 @@
 import streamlit as st
 from streamlit_autorefresh import st_autorefresh
-import json
-
-from google.oauth2 import service_account
-from google.cloud import firestore
+import requests
 
 st_autorefresh(interval=1000, key="refresh")
 
-@st.cache_resource
-def get_db():
-    key_dict = json.loads(st.secrets["firebase"]["json_key"])
-    creds = service_account.Credentials.from_service_account_info(
-        key_dict,
-        scopes=["https://www.googleapis.com/auth/cloud-platform",
-                "https://www.googleapis.com/auth/datastore"]
-    )
-    return firestore.Client(
-        project=key_dict["project_id"],
-        credentials=creds
-    )
+# ---------------------------------------------------------------------------
+# Firestore REST API — no service account keys, never expires
+# Uses your public Firebase API key + project ID only
+# ---------------------------------------------------------------------------
+PROJECT_ID = st.secrets["firebase"]["project_id"]
+API_KEY    = st.secrets["firebase"]["api_key"]
 
-db = get_db()
+BASE_URL = (
+    f"https://firestore.googleapis.com/v1/"
+    f"projects/{PROJECT_ID}/databases/(default)/documents/main"
+)
 
-homework_db      = db.collection("main").document("homework")
-activities_db    = db.collection("main").document("activities")
-announcements_db = db.collection("main").document("announcements")
-class_tests_db   = db.collection("main").document("class_tests")
+def get_document(doc_name: str) -> dict:
+    """Fetch a Firestore document and return its fields as a plain dict."""
+    url = f"{BASE_URL}/{doc_name}?key={API_KEY}"
+    try:
+        resp = requests.get(url, timeout=10)
+        resp.raise_for_status()
+        raw_fields = resp.json().get("fields", {})
+        # Firestore REST wraps every value: {"stringValue": "..."} etc.
+        return {
+            k: list(v.values())[0]          # grab the actual value
+            for k, v in raw_fields.items()
+        }
+    except requests.exceptions.RequestException as e:
+        st.error(f"Could not load {doc_name}: {e}")
+        return {}
 
+# ---------------------------------------------------------------------------
+# Page config & styles
+# ---------------------------------------------------------------------------
 st.set_page_config(layout="wide")
 
 st.markdown("""
@@ -86,13 +94,11 @@ with col4:
         <h3>ANNOUNCEMENTS</h3>
     </div>""", unsafe_allow_html=True)
 
-    doc = announcements_db.get()
-    if doc.exists:
-        d = doc.to_dict()
-        for key, value in d.items():
-            st.code(f"{value}", language="html")
-        if not d:
-            st.code("None", language="html")
+    d = get_document("announcements")
+    for key, value in d.items():
+        st.code(f"{value}", language="html")
+    if not d:
+        st.code("None", language="html")
 
 with col7:
     for _ in range(5):
@@ -102,13 +108,11 @@ with col7:
         <h3>HOMEWORK ASSIGNMENTS</h3>
     </div>""", unsafe_allow_html=True)
 
-    doc = homework_db.get()
-    if doc.exists:
-        d = doc.to_dict()
-        for key, value in d.items():
-            st.code(f"{key} : {value}", language="html")
-        if not d:
-            st.code("None", language="html")
+    d = get_document("homework")
+    for key, value in d.items():
+        st.code(f"{key} : {value}", language="html")
+    if not d:
+        st.code("None", language="html")
 
 with col10:
     for _ in range(5):
@@ -118,13 +122,11 @@ with col10:
         <h3>ACTIVITIES</h3>
     </div>""", unsafe_allow_html=True)
 
-    doc = activities_db.get()
-    if doc.exists:
-        d = doc.to_dict()
-        for key, value in d.items():
-            st.code(f"{key} : {value}", language="html")
-        if not d:
-            st.code("None", language="html")
+    d = get_document("activities")
+    for key, value in d.items():
+        st.code(f"{key} : {value}", language="html")
+    if not d:
+        st.code("None", language="html")
 
 with col13:
     for _ in range(5):
@@ -134,13 +136,11 @@ with col13:
         <h3>CLASS TESTS</h3>
     </div>""", unsafe_allow_html=True)
 
-    doc = class_tests_db.get()
-    if doc.exists:
-        d = doc.to_dict()
-        for key, value in d.items():
-            st.code(f"{key} : {value}", language="html")
-        if not d:
-            st.code("None", language="html")
+    d = get_document("class_tests")
+    for key, value in d.items():
+        st.code(f"{key} : {value}", language="html")
+    if not d:
+        st.code("None", language="html")
 
 for _ in range(10):
     st.text("")
