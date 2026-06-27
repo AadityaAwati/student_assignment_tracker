@@ -1,17 +1,26 @@
 import streamlit as st
-import firebase_admin
-from firebase_admin import credentials, firestore
 from streamlit_autorefresh import st_autorefresh
 import json
 
+from google.oauth2 import service_account
+from google.cloud import firestore
+
 st_autorefresh(interval=1000, key="refresh")
 
-if not firebase_admin._apps:
+@st.cache_resource
+def get_db():
     key_dict = json.loads(st.secrets["firebase"]["json_key"])
-    cred = credentials.Certificate(key_dict)
-    firebase_admin.initialize_app(cred)
+    creds = service_account.Credentials.from_service_account_info(
+        key_dict,
+        scopes=["https://www.googleapis.com/auth/cloud-platform",
+                "https://www.googleapis.com/auth/datastore"]
+    )
+    return firestore.Client(
+        project=key_dict["project_id"],
+        credentials=creds
+    )
 
-db = firestore.client()
+db = get_db()
 
 homework_db      = db.collection("main").document("homework")
 activities_db    = db.collection("main").document("activities")
