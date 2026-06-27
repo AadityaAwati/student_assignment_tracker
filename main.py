@@ -2,7 +2,7 @@ import streamlit as st
 from streamlit_autorefresh import st_autorefresh
 import requests
 
-st_autorefresh(interval=1000, key="refresh")
+st_autorefresh(interval=30000, key="refresh")
 
 # ---------------------------------------------------------------------------
 # Firestore REST API — no service account keys, never expires
