@@ -7,7 +7,7 @@ import time
 st.write("Time:", time.time())
 st_autorefresh(interval=1000, key="refresh")
 if not firebase_admin._apps:
-    cred = credentials.Certificate("serviceAccountKey.json")
+    cred = credentials.Certificate(dict(st.secrets["firebase"]))
     firebase_admin.initialize_app(cred)
 
 from google.oauth2 import service_account
