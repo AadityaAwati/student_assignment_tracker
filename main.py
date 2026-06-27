@@ -7,32 +7,16 @@ import json
 st_autorefresh(interval=1000, key="refresh")
 
 if not firebase_admin._apps:
-    firebase_config = {
-        "type": st.secrets["firebase"]["type"],
-        "project_id": st.secrets["firebase"]["project_id"],
-        "private_key_id": st.secrets["firebase"]["private_key_id"],
-        # CRITICAL: replace literal \n in the stored key with actual newlines
-        "private_key": st.secrets["firebase"]["private_key"].replace("\\n", "\n"),
-        "client_email": st.secrets["firebase"]["client_email"],
-        "client_id": st.secrets["firebase"]["client_id"],
-        "auth_uri": st.secrets["firebase"]["auth_uri"],
-        "token_uri": st.secrets["firebase"]["token_uri"],
-        "auth_provider_x509_cert_url": st.secrets["firebase"]["auth_provider_x509_cert_url"],
-        "client_x509_cert_url": st.secrets["firebase"]["client_x509_cert_url"],
-        "universe_domain": st.secrets["firebase"].get("universe_domain", "googleapis.com"),
-    }
-    cred = credentials.Certificate(firebase_config)
+    key_dict = json.loads(st.secrets["firebase"]["json_key"])
+    cred = credentials.Certificate(key_dict)
     firebase_admin.initialize_app(cred)
 
 db = firestore.client()
 
-homework_db = db.collection("main").document("homework")
-activities_db = db.collection("main").document("activities")
+homework_db      = db.collection("main").document("homework")
+activities_db    = db.collection("main").document("activities")
 announcements_db = db.collection("main").document("announcements")
-class_tests_db = db.collection("main").document("class_tests")
-
-st.write("Secrets loaded")
-st.write(st.secrets["firebase"]["project_id"])
+class_tests_db   = db.collection("main").document("class_tests")
 
 st.set_page_config(layout="wide")
 
@@ -46,34 +30,28 @@ div.stButton > button {
     background-color: #191970 !important;
     color: white !important;
 }
-
 div.stButton > button * {
     font-family: "Courier New", monospace !important;
     font-weight: bold !important;
 }
-
 h1, h2 {
     font-family: "Georgia", serif !important;
     font-weight: bold !important;
 }
-
 h3 {
     font-family: "Courier New", monospace !important;
     font-size: 23px !important;
 }
-
 [data-testid="column"]:nth-of-type(1){
     background-color:#F0F2F6;
     border-radius:10px;
     padding:20px;
 }
-
 div[data-baseweb="input"] input {
     font-family: 'Courier New', monospace !important;
     font-size: 24px !important;
     color: white !important;
 }
-
 div[data-testid="stWidgetLabel"] p {
     font-family: 'Courier New', monospace !important;
     font-size: 18px !important;
@@ -82,9 +60,9 @@ div[data-testid="stWidgetLabel"] p {
 </style>
 """, unsafe_allow_html=True)
 
-col1, col2, col3 = st.columns([10, 1, 1])
-col4, col5, col6 = st.columns([10, 1, 1])
-col7, col8, col9 = st.columns([10, 1, 1])
+col1,  col2,  col3  = st.columns([10, 1, 1])
+col4,  col5,  col6  = st.columns([10, 1, 1])
+col7,  col8,  col9  = st.columns([10, 1, 1])
 col10, col11, col12 = st.columns([10, 1, 1])
 col13, col14, col15 = st.columns([10, 1, 1])
 
@@ -94,99 +72,66 @@ with col1:
 with col4:
     for _ in range(10):
         st.text("")
-
     st.markdown("""
-    <div style="
-        background-color:#a69b03;
-        padding:20px;
-        border-radius:10px;
-    ">
+    <div style="background-color:#a69b03;padding:20px;border-radius:10px;">
         <h3>ANNOUNCEMENTS</h3>
-    </div>
-    """, unsafe_allow_html=True)
+    </div>""", unsafe_allow_html=True)
 
     doc = announcements_db.get()
-
     if doc.exists:
-        announcements_dict = doc.to_dict()
-
-        for key, value in announcements_dict.items():
+        d = doc.to_dict()
+        for key, value in d.items():
             st.code(f"{value}", language="html")
-        if not announcements_dict:
-            st.code(f"None", language="html")
+        if not d:
+            st.code("None", language="html")
 
 with col7:
     for _ in range(5):
         st.text("")
-
     st.markdown("""
-    <div style="
-        background-color:#a34903;
-        padding:20px;
-        border-radius:10px;
-    ">
+    <div style="background-color:#a34903;padding:20px;border-radius:10px;">
         <h3>HOMEWORK ASSIGNMENTS</h3>
-    </div>
-    """, unsafe_allow_html=True)
+    </div>""", unsafe_allow_html=True)
 
     doc = homework_db.get()
-
     if doc.exists:
-        homework_dict = doc.to_dict()
-
-        for key, value in homework_dict.items():
+        d = doc.to_dict()
+        for key, value in d.items():
             st.code(f"{key} : {value}", language="html")
-        if not homework_dict:
-            st.code(f"None", language="html")
+        if not d:
+            st.code("None", language="html")
 
 with col10:
     for _ in range(5):
         st.text("")
-
     st.markdown("""
-    <div style="
-        background-color:#166bf5;
-        padding:20px;
-        border-radius:10px;
-    ">
+    <div style="background-color:#166bf5;padding:20px;border-radius:10px;">
         <h3>ACTIVITIES</h3>
-    </div>
-    """, unsafe_allow_html=True)
+    </div>""", unsafe_allow_html=True)
 
     doc = activities_db.get()
-
     if doc.exists:
-        activities_dict = doc.to_dict()
-
-        for key, value in activities_dict.items():
+        d = doc.to_dict()
+        for key, value in d.items():
             st.code(f"{key} : {value}", language="html")
-        if not activities_dict:
-            st.code(f"None", language="html")
+        if not d:
+            st.code("None", language="html")
 
 with col13:
     for _ in range(5):
         st.text("")
-
     st.markdown("""
-    <div style="
-        background-color:#03a619;
-        padding:20px;
-        border-radius:10px;
-    ">
+    <div style="background-color:#03a619;padding:20px;border-radius:10px;">
         <h3>CLASS TESTS</h3>
-    </div>
-    """, unsafe_allow_html=True)
+    </div>""", unsafe_allow_html=True)
 
     doc = class_tests_db.get()
-
     if doc.exists:
-        class_tests_dict = doc.to_dict()
-
-        for key, value in class_tests_dict.items():
+        d = doc.to_dict()
+        for key, value in d.items():
             st.code(f"{key} : {value}", language="html")
-
-        if not class_tests_dict:
-            st.code(f"None", language="html")
+        if not d:
+            st.code("None", language="html")
 
 for _ in range(10):
     st.text("")
