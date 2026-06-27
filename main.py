@@ -2,27 +2,29 @@ import streamlit as st
 import firebase_admin
 from firebase_admin import credentials, firestore
 from streamlit_autorefresh import st_autorefresh
-import time
+import json
 
-st.write("Time:", time.time())
 st_autorefresh(interval=1000, key="refresh")
+
 if not firebase_admin._apps:
-    cred = credentials.Certificate(dict(st.secrets["firebase"]))
+    # Load Firebase credentials from Streamlit secrets
+    # This is the correct way to authenticate on Streamlit Community Cloud
+    firebase_config = {
+        "type": st.secrets["firebase"]["type"],
+        "project_id": st.secrets["firebase"]["project_id"],
+        "private_key_id": st.secrets["firebase"]["private_key_id"],
+        # CRITICAL: replace literal \n in the stored key with actual newlines
+        "private_key": st.secrets["firebase"]["private_key"].replace("\\n", "\n"),
+        "client_email": st.secrets["firebase"]["client_email"],
+        "client_id": st.secrets["firebase"]["client_id"],
+        "auth_uri": st.secrets["firebase"]["auth_uri"],
+        "token_uri": st.secrets["firebase"]["token_uri"],
+        "auth_provider_x509_cert_url": st.secrets["firebase"]["auth_provider_x509_cert_url"],
+        "client_x509_cert_url": st.secrets["firebase"]["client_x509_cert_url"],
+        "universe_domain": st.secrets["firebase"].get("universe_domain", "googleapis.com"),
+    }
+    cred = credentials.Certificate(firebase_config)
     firebase_admin.initialize_app(cred)
-
-from google.oauth2 import service_account
-from google.auth.transport.requests import Request
-
-creds = service_account.Credentials.from_service_account_file(
-    "serviceAccountKey.json",
-    scopes=['https://www.googleapis.com/auth/cloud-platform']
-)
-
-try:
-    creds.refresh(Request())
-    st.success("TOKEN OK")
-except Exception as e:
-    st.error(e)
 
 db = firestore.client()
 
