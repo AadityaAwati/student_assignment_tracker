@@ -7,8 +7,6 @@ import json
 st_autorefresh(interval=1000, key="refresh")
 
 if not firebase_admin._apps:
-    # Load Firebase credentials from Streamlit secrets
-    # This is the correct way to authenticate on Streamlit Community Cloud
     firebase_config = {
         "type": st.secrets["firebase"]["type"],
         "project_id": st.secrets["firebase"]["project_id"],
@@ -32,6 +30,9 @@ homework_db = db.collection("main").document("homework")
 activities_db = db.collection("main").document("activities")
 announcements_db = db.collection("main").document("announcements")
 class_tests_db = db.collection("main").document("class_tests")
+
+st.write("Secrets loaded")
+st.write(st.secrets["firebase"]["project_id"])
 
 st.set_page_config(layout="wide")
 
