@@ -1,15 +1,13 @@
 import streamlit as st
 from streamlit_autorefresh import st_autorefresh
 import requests
+import os
+import sys
 
 st_autorefresh(interval=30000, key="refresh")
 
-# ---------------------------------------------------------------------------
-# Firestore REST API — no service account keys, never expires
-# Uses your public Firebase API key + project ID only
-# ---------------------------------------------------------------------------
 PROJECT_ID = st.secrets["firebase"]["project_id"]
-API_KEY    = st.secrets["firebase"]["api_key"]
+API_KEY = st.secrets["firebase"]["api_key"]
 
 BASE_URL = (
     f"https://firestore.googleapis.com/v1/"
@@ -17,24 +15,109 @@ BASE_URL = (
 )
 
 def get_document(doc_name: str) -> dict:
-    """Fetch a Firestore document and return its fields as a plain dict."""
     url = f"{BASE_URL}/{doc_name}?key={API_KEY}"
     try:
         resp = requests.get(url, timeout=10)
         resp.raise_for_status()
         raw_fields = resp.json().get("fields", {})
-        # Firestore REST wraps every value: {"stringValue": "..."} etc.
         return {
-            k: list(v.values())[0]          # grab the actual value
+            k: list(v.values())[0]
             for k, v in raw_fields.items()
         }
     except requests.exceptions.RequestException as e:
         st.error(f"Could not load {doc_name}: {e}")
         return {}
 
-# ---------------------------------------------------------------------------
-# Page config & styles
-# ---------------------------------------------------------------------------
+notifications_lib_path = os.path.abspath("streamlit-push-notifications")
+sys.path.insert(0, notifications_lib_path)
+
+import streamlit_push_notifications
+
+if "previous_announcements" not in st.session_state:
+    st.session_state.previous_announcements = {}
+
+if "previous_homework" not in st.session_state:
+    st.session_state.previous_homework = {}
+
+if "previous_activities" not in st.session_state:
+    st.session_state.previous_activities = {}
+
+if "previous_class_tests" not in st.session_state:
+    st.session_state.previous_class_tests = {}
+
+announcements_data = get_document("announcements")
+homework_data = get_document("homework")
+activities_data = get_document("activities")
+class_tests_data = get_document("class_tests")
+
+if st.session_state.previous_announcements:
+    new_items = {
+        k: v
+        for k, v in announcements_data.items()
+        if k not in st.session_state.previous_announcements
+    }
+
+    if new_items:
+        streamlit_push_notifications.send_push(
+            title="New Announcement",
+            body=f"{len(new_items)} new announcement(s) posted.",
+            icon_path="path_to_icon.png",
+            sound_path="path_to_sound.mp3",
+            tag="announcements"
+        )
+
+if st.session_state.previous_homework:
+    new_items = {
+        k: v
+        for k, v in homework_data.items()
+        if k not in st.session_state.previous_homework
+    }
+
+    if new_items:
+        streamlit_push_notifications.send_push(
+            title="New Homework Assignment",
+            body=f"{len(new_items)} new homework assignment(s) uploaded.",
+            icon_path="path_to_icon.png",
+            sound_path="path_to_sound.mp3",
+            tag="homework"
+        )
+
+if st.session_state.previous_activities:
+    new_items = {
+        k: v
+        for k, v in activities_data.items()
+        if k not in st.session_state.previous_activities
+    }
+
+    if new_items:
+        streamlit_push_notifications.send_push(
+            title="New Activity",
+            body=f"{len(new_items)} new activity(s) added.",
+            icon_path="path_to_icon.png",
+            sound_path="path_to_sound.mp3",
+            tag="activities"
+        )
+
+if st.session_state.previous_class_tests:
+    new_items = {
+        k: v
+        for k, v in class_tests_data.items()
+        if k not in st.session_state.previous_class_tests
+    }
+
+    if new_items:
+        streamlit_push_notifications.send_push(
+            title="New Class Test",
+            body=f"{len(new_items)} new class test(s) scheduled.",
+            icon_path="kle_logo.jpg",
+            sound_path="path_to_sound.mp3",
+            tag="class_tests"
+        )
+
+st.session_state.previous_announcements = announcements_data.copy()
+st.session_state.previous_homework = homework_data.copy()
+st.session_state.previous_activities = activities_data.copy()
+st.session_state.previous_class_tests = class_tests_data.copy()
 st.set_page_config(layout="wide")
 
 st.markdown("""
@@ -77,9 +160,9 @@ div[data-testid="stWidgetLabel"] p {
 </style>
 """, unsafe_allow_html=True)
 
-col1,  col2,  col3  = st.columns([10, 1, 1])
-col4,  col5,  col6  = st.columns([10, 1, 1])
-col7,  col8,  col9  = st.columns([10, 1, 1])
+col1, col2, col3 = st.columns([10, 1, 1])
+col4, col5, col6 = st.columns([10, 1, 1])
+col7, col8, col9 = st.columns([10, 1, 1])
 col10, col11, col12 = st.columns([10, 1, 1])
 col13, col14, col15 = st.columns([10, 1, 1])
 
@@ -94,7 +177,7 @@ with col4:
         <h3>ANNOUNCEMENTS</h3>
     </div>""", unsafe_allow_html=True)
 
-    d = get_document("announcements")
+    d = announcements_data
     for key, value in d.items():
         st.code(f"{value}", language="html")
     if not d:
@@ -108,7 +191,7 @@ with col7:
         <h3>HOMEWORK ASSIGNMENTS</h3>
     </div>""", unsafe_allow_html=True)
 
-    d = get_document("homework")
+    d = homework_data
     for key, value in d.items():
         st.code(f"{key} : {value}", language="html")
     if not d:
@@ -122,7 +205,7 @@ with col10:
         <h3>ACTIVITIES</h3>
     </div>""", unsafe_allow_html=True)
 
-    d = get_document("activities")
+    d = activities_data
     for key, value in d.items():
         st.code(f"{key} : {value}", language="html")
     if not d:
@@ -136,7 +219,7 @@ with col13:
         <h3>CLASS TESTS</h3>
     </div>""", unsafe_allow_html=True)
 
-    d = get_document("class_tests")
+    d = class_tests_data
     for key, value in d.items():
         st.code(f"{key} : {value}", language="html")
     if not d:
